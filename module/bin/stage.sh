@@ -15,7 +15,7 @@ if [[ -d "$IPA" ]]; then
 	cp -a "$IPA" "$STAGING_DIR/Payload"
 else
 	log 1 "Unpacking $(basename "$IPA")"
-	unzip -q "$IPA" "Payload/*" -d "$STAGING_DIR"
+	unzip -q "$IPA" "*" -d "$STAGING_DIR"
 	if [[ $? != 0 ]]; then
 		error "Failed to unzip \"$IPA\""
 	fi
