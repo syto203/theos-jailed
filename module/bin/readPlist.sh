@@ -1,15 +1,19 @@
 
-__currentOS=$(sw_vers | awk '/ProductName:/ {print$2}')
+__currentOS=$(echo $OSTYPE); 
 __readID=$1;
 __file=$2;
 __result="";
 
+if [[ "${__currentOS}" == "darwin"*  ]]; then
+   __currentOS=$(sw_vers | awk '/ProductName:/ {print$2}');
+fi
+
 __convertToXML(){
-  plutil -convert xml1 "$__file" | sed 's/Converted .*//' | sed -n ':a;N;$!ba;s/\n//g';
+  plutil --format xml --infile "$__file" --outfile "$__file";
 }
 
 __convertToPlist(){
-  plutil -convert binary1 "$__file" | sed 's/Converted .*//' | sed -n ':a;N;$!ba;s/\n//g';
+  plutil --format bin --infile "$__file" --outfile "$__file";
 }
 
 __readFromPlist(){
@@ -28,10 +32,12 @@ __readFromPlist(){
 if [[ $__currentOS == "Mac" ]] || [[ $__currentOS == "iPhone" ]]
   then
     __readFromPlist;
-else
+elif [[ $__currentOS == "linux"* ]]; then
   __convertToXML;
   __readFromPlist;
   __convertToPlist;
+else
+  __readFromPlist;
 fi
 
 
