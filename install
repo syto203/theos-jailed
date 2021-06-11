@@ -1,13 +1,14 @@
 #!/bin/bash
 set -e
 cd "$(dirname "$0")"
+__currentOS=$(echo $OSTYPE);  
 
 function error { echo "Error: $1" >&2; exit 1; }
 
 # Modify these to specify a custom install path
 MODULE_PATH="$THEOS/mod/jailed"
 TEMPLATE_PATH="$THEOS/templates/ios/kabiroberai"
-SUBSTRATE_PATH="./Library/Frameworks/CydiaSubstrate.framework"
+SUBSTRATE_PATH="/Library/Frameworks/CydiaSubstrate.framework"
 SUBSTRATE_VERSION="0.9.6301"
 SUBSTRATE="lib/CydiaSubstrate_${SUBSTRATE_VERSION}.framework"
 
@@ -34,11 +35,17 @@ if [ "$CHOICE" -eq 1 ]; then
 		rm -rf "module/${SUBSTRATE}/Libraries" "module/${SUBSTRATE}/Commands"
 
 elif [ "$CHOICE" -eq 2 ]; then
+	if [ $(which lipo) ] && [ $(which install_name_tool) ]; then
+		echo -e "lipo and install_name_tool found"
+	else
+		error "lipo and install_name_tool not found, use Cydiasubstrate instead OR install cctools and try again."
+	fi
+
 # find 'com.ex.substitute' | list last one | using "sed" remove everything before '<a href=\" ' , remove everything after the first ' "> ' 
 LATEST_SUBSTITUTE="$(wget -q -O - https://apt.bingner.com/debs/1443.00 | grep 'com.ex.substitute' | tail -1 | sed -e 's/.*\<a href=\"//' -e 's/\"\>.*//')"
-SUBSTITUTE_PATH="./usr/lib/libsubstitute.dylib"
+SUBSTITUTE_PATH="/usr/lib/libsubstitute.dylib"
 	if [ -z "${LATEST_SUBSTITUTE}" ]; then
-		LATEST_SUBSTITUTE=com.ex.substitute_2.0.7_iphoneos-arm.deb
+		LATEST_SUBSTITUTE=com.ex.substitute_2.1.0_iphoneos-arm.deb
 	fi
 
 # Install Substitute
@@ -93,3 +100,45 @@ rm -rf "$TEMPLATE_PATH"/*
 mv *.nic.tar "$TEMPLATE_PATH/jailed.nic.tar"
 echo "*" > "$TEMPLATE_PATH/.gitignore"
 echo "Successfully installed template."
+
+# Installing Dependencies for linux
+if [[ "${__currentOS}" == "linux"*  ]]; then
+	   if [ $(which plutil) ]; then
+		echo "plutil found";
+		elif [ $(which plistutil) ]; then
+		echo "plistutil found, attempting to symlink to plistutil"
+		ln -si "$(which plistutil)" /usr/local/bin/plutil
+		else
+		echo -e "plistutil/plutil isn't installed\n"
+		read -p "Attempt Install? (Y/n)" TOOL_CHOICE
+			case "${TOOL_CHOICE}" in
+				N|n)
+					error "plistutil/plutil wasn't found and you declined to install. please install (libplist) manually if the automated method fails."
+					exit 1;
+				;;
+				Y|y|*)
+					echo "fetching libplist-git"
+					curl -#Lo "libplist-git.tar.gz" "https://aur.archlinux.org/cgit/aur.git/snapshot/libplist-git.tar.gz"
+					tar -xf libplist-git.tar.gz
+					cd libplist-git.tar.gz				
+					if [ $(makepkg -sri) ]; then
+						ln -si "$(which plistutil)" /usr/local/bin/plutil
+					fi
+					if [ $(which plutil) ]; then
+					echo "Done!!"
+					fi
+				;;
+			esac
+   fi
+   echo -e "Installing insert_dylib\n"
+   curl -#Lo "insert_dylib.zip" "https://github.com/LeanVel/insert_dylib/archive/refs/heads/master.zip"
+   unzip "insert_dylib.zip" -d "insert_dylib"
+   cd insert_dylib/../
+   chmod +x Install.sh
+   ./Instll.sh
+
+	echo -e "linking insert_dylib\n"
+	ln -sf $(which insert_dylib) $THEOS/mod/jailed/bin/insert_dylib && echo "Success";
+	echo -e "addind Linux to target\n"
+	cp -r $THEOS/mod/jailed/targets/Darwin $THEOS/mod/jailed/targets/Linux
+fi

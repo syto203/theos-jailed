@@ -7,7 +7,7 @@ To begin developing your first jailed tweak, head over to [Installation](https:/
 * Works with the latest and greatest
     - iOS 8 and up
     with your choice of:
-    - CydiaSubstrate.framework (instead of the outdated libsubstrate.dylib)
+    - CydiaSubstrate.framework
     OR
     - Latest [Substitute](https://apt.bingner.com/info/com.ex.substitute/.)
 * Functions as a module, so it plugs in to Theos. This means you can always use the latest version of Theos with it
@@ -34,6 +34,13 @@ To begin developing your first jailed tweak, head over to [Installation](https:/
 * Lets you inject Cydia tweaks into the target app (doesn't work with all tweaks)
 * Adds `make troubleshoot-jailed` for helping with issues
 * Extensively documented on the [wiki](https://github.com/kabiroberai/theos-jailed/wiki)
+
+## Linux
+Added some support for (Arch) linux.
+Requires:
+* cctools (check AUR or you distro. also available here: [cctools-port](https://github.com/tpoechtrager/cctools-port))
+* [insert_dylib](https://github.com/LeanVel/insert_dylib) ( install script will attempt to install it).
+* [plutiil/plistutil](https://github.com/libimobiledevice/libplist) (install script will attempt to install for Arch).
 
 ## Example output
 <img src="http://i.imgur.com/zBQY7ec.png" width="750">
